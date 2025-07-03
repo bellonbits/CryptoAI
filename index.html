@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crypto Trading Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d4ff, #5b78ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.02);
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #00d4ff, #5b78ff);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .popular-symbols {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .symbol-tag {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .symbol-tag:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .price-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 15px 0;
+            background: linear-gradient(45deg, #00d4ff, #5b78ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .price-change {
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .price-change.positive {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: white;
+        }
+
+        .price-change.negative {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+            color: white;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .signal-card {
+            grid-column: span 2;
+        }
+
+        .signal-display {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .signal-badge {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .signal-buy {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+        }
+
+        .signal-sell {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .signal-hold {
+            background: linear-gradient(45deg, #ffd93d, #ffcd3c);
+            color: #333;
+            box-shadow: 0 8px 25px rgba(255, 217, 61, 0.3);
+        }
+
+        .confidence-meter {
+            flex: 1;
+        }
+
+        .confidence-bar {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #00d4ff, #5b78ff);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #00d4ff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .technical-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .indicator {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-analysis {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .analysis-text {
+            line-height: 1.6;
+            font-size: 1.1rem;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+
+            .search-input {
+                min-width: 100%;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .signal-card {
+                grid-column: span 1;
+            }
+
+            .signal-display {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Crypto Trading Assistant</h1>
+            <p>Real-time market analysis powered by AI and machine learning</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input type="text" id="symbolInput" class="search-input" placeholder="Enter crypto symbol (e.g., BTC, ETH, DOGE)" value="BTC">
+                <button onclick="analyzeSymbol()" class="btn">🔍 Analyze</button>
+                <button onclick="startAutoRefresh()" class="btn btn-secondary" id="autoRefreshBtn">📡 Auto Refresh</button>
+            </div>
+            <div class="popular-symbols">
+                <span style="opacity: 0.8; margin-right: 10px;">Popular:</span>
+                <div class="symbol-tag" onclick="quickAnalyze('BTC')">₿ Bitcoin</div>
+                <div class="symbol-tag" onclick="quickAnalyze('ETH')">Ξ Ethereum</div>
+                <div class="symbol-tag" onclick="quickAnalyze('DOGE')">🐕 Dogecoin</div>
+                <div class="symbol-tag" onclick="quickAnalyze('SOL')">◎ Solana</div>
+                <div class="symbol-tag" onclick="quickAnalyze('ADA')">₳ Cardano</div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Analyzing market data...</div>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div id="dashboard" style="display: none;">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">💰 Current Price</div>
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div class="price-display" id="currentPrice">$0.00</div>
+                    <div class="price-change" id="priceChange">+0.00%</div>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">24h High</div>
+                            <div class="metric-value" id="high24h">$0.00</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">24h Low</div>
+                            <div class="metric-value" id="low24h">$0.00</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Volume</div>
+                            <div class="metric-value" id="volume24h">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Trades</div>
+                            <div class="metric-value" id="tradeCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card signal-card">
+                    <div class="card-header">
+                        <div class="card-title">🤖 AI Trading Signal</div>
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div class="signal-display">
+                        <div class="signal-badge" id="tradingSignal">ANALYZING</div>
+                        <div class="confidence-meter">
+                            <div style="opacity: 0.8;">Confidence Level</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                            </div>
+                            <div style="margin-top: 8px; font-weight: 600;" id="confidenceText">0%</div>
+                        </div>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">Buy Signals</div>
+                            <div class="metric-value" id="buySignals">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Sell Signals</div>
+                            <div class="metric-value" id="sellSignals">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Market Sentiment</div>
+                            <div class="metric-value" id="marketSentiment">Neutral</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Last Updated</div>
+                            <div class="metric-value" id="lastUpdated">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📊 Technical Analysis</div>
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div class="technical-indicators">
+                        <div class="indicator">
+                            <div class="metric-label">RSI (14)</div>
+                            <div class="metric-value" id="rsi">--</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="metric-label">SMA 20</div>
+                            <div class="metric-value" id="sma20">--</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="metric-label">SMA 50</div>
+                            <div class="metric-value" id="sma50">--</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="metric-label">Volume Ratio</div>
+                            <div class="metric-value" id="volumeRatio">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📈 Price Chart</div>
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-analysis">
+                <div class="card-header">
+                    <div class="card-title">🧠 AI Market Analysis</div>
+                    <div class="status-indicator"></div>
+                </div>
+                <div class="analysis-text" id="aiAnalysis">
+                    Analyzing market conditions...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+        let autoRefreshInterval;
+        let priceChart;
+        let currentSymbol = 'BTC';
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Price',
+                        data: [],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Show loading state
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('error').classList.remove('show');
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').classList.add('show');
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // Format currency
+        function formatCurrency(value) {
+            if (value >= 1000000) {
+                return '$' + (value / 1000000).toFixed(2) + 'M';
+            } else if (value >= 1000) {
+                return '$' + (value / 1000).toFixed(2) + 'K';
+            } else if (value >= 1) {
+                return '$' + value.toFixed(2);
+            } else {
+                return '$' + value.toFixed(6);
+            }
+        }
+
+        // Format large numbers
+        function formatLargeNumber(value) {
+            if (value >= 1000000000) {
+                return (value / 1000000000).toFixed(2) + 'B';
+            } else if (value >= 1000000) {
+                return (value / 1000000).toFixed(2) + 'M';
+            } else if (value >= 1000) {
+                return (value / 1000).toFixed(2) + 'K';
+            } else {
+                return value.toFixed(0);
+            }
+        }
+
+        // Update price display
+        function updatePriceDisplay(data) {
+            if (data.error) {
+                showError('Error fetching market data: ' + data.error);
+                return;
+            }
+
+            document.getElementById('currentPrice').textContent = formatCurrency(data.current_price);
+
+            const priceChangeEl = document.getElementById('priceChange');
+            const changePercent = data.price_change_percent_24h;
+            priceChangeEl.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
+            priceChangeEl.className = 'price-change ' + (changePercent >= 0 ? 'positive' : 'negative');
+
+            document.getElementById('high24h').textContent = formatCurrency(data.high_24h);
+            document.getElementById('low24h').textContent = formatCurrency(data.low_24h);
+            document.getElementById('volume24h').textContent = formatLargeNumber(data.volume_24h);
+            document.getElementById('tradeCount').textContent = formatLargeNumber(data.trade_count);
+        }
+
+        // Update trading signal display
+        function updateTradingSignal(signalData) {
+            const signalEl = document.getElementById('tradingSignal');
+            const confidenceFillEl = document.getElementById('confidenceFill');
+            const confidenceTextEl = document.getElementById('confidenceText');
+
+            const signal = signalData.signal;
+            const confidence = signalData.confidence;
+
+            signalEl.textContent = signal;
+            signalEl.className = 'signal-badge signal-' + signal.toLowerCase();
+
+            confidenceFillEl.style.width = confidence + '%';
+            confidenceTextEl.textContent = confidence.toFixed(0) + '%';
+
+            document.getElementById('buySignals').textContent = signalData.buy_signals || 0;
+            document.getElementById('sellSignals').textContent = signalData.sell_signals || 0;
+        }
+
+        // Update technical indicators
+        function updateTechnicalIndicators(indicators) {
+            if (indicators.error) return;
+
+            document.getElementById('rsi').textContent = indicators.rsi ? indicators.rsi.toFixed(2) : '--';
+            document.getElementById('sma20').textContent = indicators.sma_20 ? formatCurrency(indicators.sma_20) : '--';
+            document.getElementById('sma50').textContent = indicators.sma_50 ? formatCurrency(indicators.sma_50) : '--';
+            document.getElementById('volumeRatio').textContent = indicators.volume_ratio ? indicators.volume_ratio.toFixed(2) : '--';
+        }
+
+        // Update chart with historical data
+        function updateChart(historicalData) {
+            if (!historicalData || historicalData.length === 0) return;
+
+            const labels = historicalData.slice(-24).map(item => {
+                const date = new Date(item.timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            });
+
+            const prices = historicalData.slice(-24).map(item => item.close);
+
+            priceChart.data.labels = labels;
+            priceChart.data.datasets[0].data = prices;
+            priceChart.update();
+        }
+
+        // Analyze symbol
+        async function analyzeSymbol() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            if (!symbol) {
+                showError('Please enter a valid symbol');
+                return;
+            }
+
+            currentSymbol = symbol;
+            showLoading();
+
+            try {
+                // Fetch AI signal data
+                const response = await fetch(`${API_BASE_URL}/ai-signal/${symbol}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    showError('Error: ' + data.error);
+                    return;
+                }
+
+                // Update all displays
+                updatePriceDisplay(data.current_data);
+                updateTradingSignal(data.ml_prediction);
+                updateTechnicalIndicators(data.technical_indicators);
+
+                // Update market sentiment
+                document.getElementById('marketSentiment').textContent =
+                    data.market_sentiment.charAt(0).toUpperCase() + data.market_sentiment.slice(1);
+
+                // Update last updated time
+                const now = new Date();
+                document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+
+                // Update AI analysis
+                document.getElementById('aiAnalysis').textContent =
+                    data.groq_analysis || 'AI analysis not available';
+
+                // Fetch and update historical data for chart
+                const histResponse = await fetch(`${API_BASE_URL}/historical/${symbol}?interval=1h&limit=24`);
+                const histData = await histResponse.json();
+                if (histData.data) {
+                    updateChart(histData.data);
+                }
+
+                hideLoading();
+
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError('Failed to connect to the API. Make sure the backend server is running on port 8000.');
+            }
+        }
+
+        // Quick analyze from popular symbols
+        function quickAnalyze(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            analyzeSymbol();
+        }
+
+        // Auto refresh functionality
+        function startAutoRefresh() {
+            const btn = document.getElementById('autoRefreshBtn');
+
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                btn.textContent = '📡 Auto Refresh';
+                btn.classList.remove('btn-secondary');
+            } else {
+                autoRefreshInterval = setInterval(() => {
+                    if (currentSymbol) {
+                        analyzeSymbol();
+                    }
+                }, 30000); // Refresh every 30 seconds
+
+                btn.textContent = '⏹️ Stop Refresh';
+                btn.classList.add('btn-secondary');
+            }
+        }
+
+        // Handle Enter key in search input
+        document.getElementById('symbolInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeSymbol();
+            }
+        });
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            // Auto-analyze BTC on load
+            setTimeout(() => {
+                analyzeSymbol();
+            }, 1000);
+        });
+
+        // Handle window resize for chart
+        window.addEventListener('resize', function() {
+            if (priceChart) {
+                priceChart.resize();
+            }
+        });
+    </script>
+</body>
+</html>
