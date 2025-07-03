@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # Configuration
-GROQ_API_KEY = ""
+GROQ_API_KEY = "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"
 BINANCE_BASE_URL = "https://api.binance.com/api/v3"
 
 # Symbol mapping for common cryptocurrencies
